@@ -2,64 +2,65 @@
 
 
 module I2C_DRI(
-    input   wire            clk         ,  //ÏµÍ³Ê±ÖÓ
-    input   wire            rst_n       ,  //ÏµÍ³¸´Î»
+    input   wire            clk         ,  //ç³»ç»Ÿæ—¶é’Ÿ
+    input   wire            rst_n       ,  //ç³»ç»Ÿå¤ä½
 
-    input           [25:0]  clk_freq    ,  //Ä£¿éÊäÈëµÄÊ±ÖÓÆµÂÊ
-    input           [17:0]  i2c_freq    ,  //IIC_SCLµÄÊ±ÖÓÆµÂÊ 
+    input           [25:0]  clk_freq    ,  //æ¨¡å—è¾“å…¥çš„æ—¶é’Ÿé¢‘ç‡
+    input           [17:0]  i2c_freq    ,  //IIC_SCLçš„æ—¶é’Ÿé¢‘ç‡ 
 
-    input                   i2c_rh_wl   ,  //I2C¶ÁĞ´¿ØÖÆĞÅºÅ
-    input                   bit_ctrl    ,  //×ÖµØÖ·Î»¿ØÖÆ(16b/8b)
-    input   wire            i2c_exec    ,  //Ò»´Î¶ÁĞ´¿ªÊ¼ĞÅºÅ
-    input   wire    [6:0 ]  sensor_addr ,  //Éè±¸µØÖ·
-    input   wire    [15:0]  i2c_addr    ,  //¼Ä´æÆ÷µØÖ·
-    input   wire    [7:0 ]  i2c_data_w  ,  //Ğ´Èë¼Ä´æÆ÷µÄÊı¾İ
+    input                   i2c_rh_wl   ,  //I2Cè¯»å†™æ§åˆ¶ä¿¡å·
+    input                   bit_ctrl    ,  //å­—åœ°å€ä½æ§åˆ¶(16b/8b)
+    input   wire            i2c_exec    ,  //ä¸€æ¬¡è¯»å†™å¼€å§‹ä¿¡å·
+    input   wire    [6:0 ]  sensor_addr ,  //è®¾å¤‡åœ°å€
+    input   wire    [15:0]  i2c_addr    ,  //å¯„å­˜å™¨åœ°å€
+    input   wire    [7:0 ]  i2c_data_w  ,  //å†™å…¥å¯„å­˜å™¨çš„æ•°æ®
 
-    output  reg     [7:0 ]  i2c_data_r  ,  //´Ó¼Ä´æÆ÷¶Á³öµÄÊı¾İ
-    output  reg             i2c_done    ,  //I2CÒ»´Î²Ù×÷Íê³É
-    output  reg             err_flag    ,  //·¢Éú´íÎóĞÅºÅ
-    output  reg             scl         ,  //i2cÊ±ÖÓ
-    inout   wire            sda            //i2cÊı¾İ×ÜÏß   
+    output  reg     [7:0 ]  i2c_data_r  ,  //ä»å¯„å­˜å™¨è¯»å‡ºçš„æ•°æ®
+    output  reg             i2c_done    ,  //I2Cä¸€æ¬¡æ“ä½œå®Œæˆ
+    output  reg             err_flag    ,  //å‘ç”Ÿé”™è¯¯ä¿¡å·
+    output  reg             scl         ,  //i2cæ—¶é’Ÿ
+    inout   wire            sda            //i2cæ•°æ®æ€»çº¿   
     );
+
 
 //==================================================
 //parameter define
 //==================================================
-parameter   IDLE    = 11'b000_0000_0001;//¿ÕÏĞ×´Ì¬
-parameter   START   = 11'b000_0000_0010;//Ğ´ÆğÊ¼
-parameter   SLADDR  = 11'b000_0000_0100;//È·ÈÏÉè±¸µØÖ·
-parameter   ADDR16  = 11'b000_0000_1000;//·¢ËÍ16Î»×ÖµØÖ· 
-parameter   ADDR8   = 11'b000_0001_0000;//·¢ËÍ8Î»×ÖµØÖ· 
-parameter   DATA_WR = 11'b000_0010_0000;//Ğ´Êı¾İ
-parameter   RD_START= 11'b000_0100_0000;//¶Á¿ªÊ¼
-parameter   ADDR_RD = 11'b000_1000_0000;//Éè±¸µØÖ·¶Á²Ù×÷
-parameter   DATA_RD = 11'b001_0000_0000;//¶ÁÊı¾İ
-parameter   STOP    = 11'b010_0000_0000;//Í£Ö¹
-parameter   ERROR   = 11'b100_0000_0000;//´íÎó
+parameter   IDLE    = 11'b000_0000_0001;//ç©ºé—²çŠ¶æ€
+parameter   START   = 11'b000_0000_0010;//å†™èµ·å§‹
+parameter   SLADDR  = 11'b000_0000_0100;//ç¡®è®¤è®¾å¤‡åœ°å€
+parameter   ADDR16  = 11'b000_0000_1000;//å‘é€16ä½å­—åœ°å€ 
+parameter   ADDR8   = 11'b000_0001_0000;//å‘é€8ä½å­—åœ°å€ 
+parameter   DATA_WR = 11'b000_0010_0000;//å†™æ•°æ®
+parameter   RD_START= 11'b000_0100_0000;//è¯»å¼€å§‹
+parameter   ADDR_RD = 11'b000_1000_0000;//è®¾å¤‡åœ°å€è¯»æ“ä½œ
+parameter   DATA_RD = 11'b001_0000_0000;//è¯»æ•°æ®
+parameter   STOP    = 11'b010_0000_0000;//åœæ­¢
+parameter   ERROR   = 11'b100_0000_0000;//é”™è¯¯
 
 
 //==================================================
 //internal signals
 //==================================================
-reg     [2:0]   cnt_freq    ;//¼ÆÊıdrive_flag ²úÉúI2CÊ±ÖÓ
+reg     [2:0]   cnt_freq    ;//è®¡æ•°drive_flag äº§ç”ŸI2Cæ—¶é’Ÿ
 wire            add_cnt_freq;
 wire            end_cnt_freq;
 
-reg     [5:0]   cnt_flag    ;//¼ÆÊıµ±Ç°×´Ì¬ÓĞ¶àÉÙ¸ödrive_flag
+reg     [5:0]   cnt_flag    ;//è®¡æ•°å½“å‰çŠ¶æ€æœ‰å¤šå°‘ä¸ªdrive_flag
 wire            add_cnt_flag;
 wire            end_cnt_flag;
-reg     [5:0]   x           ;//¿É±ä¼ÆÊıÆ÷µÄ×î´óÖµ
+reg     [6:0]   x           ;//å¯å˜è®¡æ•°å™¨çš„æœ€å¤§å€¼
 
-reg     [9:0]   cnt         ;//ÓÃÀ´²úÉúÇı¶¯ĞÅºÅdrive_flag
+reg     [9:0]   cnt         ;//ç”¨æ¥äº§ç”Ÿé©±åŠ¨ä¿¡å·drive_flag
 wire            add_cnt     ;
 wire            end_cnt     ;
 
-reg             drive_flag  ;//ÓÃÓÚÇı¶¯±¾Ä£¿é¹¤×÷µÄĞÅºÅ
+reg             drive_flag  ;//ç”¨äºé©±åŠ¨æœ¬æ¨¡å—å·¥ä½œçš„ä¿¡å·
 reg     [10:0]  state       ;//state register
 reg             work_flag   ;//work flag
-reg             sda_dir     ;//ÈıÌ¬Êı¾İÏßĞ´Ê¹ÄÜ
-reg     [7:0]   data_shift  ;//ÒÆÎ»¼Ä´æÆ÷
-reg             i2c_ack     ;//ÏìÓ¦ĞÅºÅ
+reg             sda_dir     ;//ä¸‰æ€æ•°æ®çº¿å†™ä½¿èƒ½
+reg     [7:0]   data_shift  ;//ç§»ä½å¯„å­˜å™¨
+reg             i2c_ack     ;//å“åº”ä¿¡å·
 
 reg             sda_out     ;
 wire            sda_in      ;
@@ -70,15 +71,15 @@ wire    [8:0]   FLAG1       ;
 wire    [8:0]   FLAG2       ;
 wire    [8:0]   FLAG3       ;
 
-assign  clk_divide = (clk_freq/i2c_freq) >> 2'd2 ;  //Ä£¿éÇı¶¯Ê±ÖÓµÄ·ÖÆµÏµÊı
-assign  MAX   = clk_freq/i2c_freq;//Çı¶¯Ê±ÖÓµÄ¼ÆÊı×î´óÖµ
+assign  clk_divide = (clk_freq/i2c_freq) >> 2'd2 ;  //æ¨¡å—é©±åŠ¨æ—¶é’Ÿçš„åˆ†é¢‘ç³»æ•°
+assign  MAX   = clk_freq/i2c_freq;//é©±åŠ¨æ—¶é’Ÿçš„è®¡æ•°æœ€å¤§å€¼
 assign  FLAG0 = clk_divide - 1'b1 ;
 assign  FLAG1 = 2*clk_divide - 1'b1 ;
 assign  FLAG2 = 3*clk_divide - 1'b1 ;
 assign  FLAG3 = 4*clk_divide - 1'b1 ;
 
-//ÈıÌ¬¶Ë¿ÚÉùÃ÷
-assign  sda = sda_dir?sda_out:1'bz;//µ±Ö÷»úÏòÊı¾İÏòÊı¾İ×ÜÏßÉÏĞ´Êı¾İÊ±£¬sda_dir=1£¬¸ø³öÓÃ»§Êı¾İ£¬µ±½ÓÊÕÊı¾İÊ±£¬ÖÃÎª¸ß×è
+//ä¸‰æ€ç«¯å£å£°æ˜
+assign  sda = sda_dir?sda_out:1'bz;//å½“ä¸»æœºå‘æ•°æ®å‘æ•°æ®æ€»çº¿ä¸Šå†™æ•°æ®æ—¶ï¼Œsda_dir=1ï¼Œç»™å‡ºç”¨æˆ·æ•°æ®ï¼Œå½“æ¥æ”¶æ•°æ®æ—¶ï¼Œç½®ä¸ºé«˜é˜»
 assign  sda_in = sda;
 //--------------------state machine define--------------------
 always @(posedge clk or negedge rst_n)begin
@@ -89,26 +90,26 @@ always @(posedge clk or negedge rst_n)begin
         case(state)
             IDLE:begin
                 if(i2c_exec==1'b1)
-                    state <= START;//½ÓÊÕµ½¿ªÊ¼ĞÅºÅ£¬½øÈëÆğÊ¼×´Ì¬
+                    state <= START;//æ¥æ”¶åˆ°å¼€å§‹ä¿¡å·ï¼Œè¿›å…¥èµ·å§‹çŠ¶æ€
                 else
                     state <= IDLE;
             end 
 
             START:begin
                 if(cnt_flag=='d6 && drive_flag)
-                    state <= SLADDR;//ÆğÊ¼×´Ì¬½áÊø£¬½øÈëÈ·ÈÏÉè±¸µØÖ·×´Ì¬
+                    state <= SLADDR;//èµ·å§‹çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤è®¾å¤‡åœ°å€çŠ¶æ€
                 else
                     state <= START;
             end
 
             SLADDR:begin
-                if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÕıÈ·½ÓÊÕµ½ÏìÓ¦
-                    if(bit_ctrl)                    //ÅĞ¶ÏÊÇ16Î»»¹ÊÇ8Î»×ÖµØÖ·
+                if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ­£ç¡®æ¥æ”¶åˆ°å“åº”
+                    if(bit_ctrl)                    //åˆ¤æ–­æ˜¯16ä½è¿˜æ˜¯8ä½å­—åœ°å€
                         state <= ADDR16;
                     else
                         state <= ADDR8 ;
-                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÃ»ÓĞ½ÓÊÕµ½ÏìÓ¦
-                    state <= ERROR;//È·ÈÏµØÖ·×´Ì¬½áÊø£¬½øÈëÈ·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬
+                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ²¡æœ‰æ¥æ”¶åˆ°å“åº”
+                    state <= ERROR;//ç¡®è®¤åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€
                 else
                     state <= SLADDR;
             end
@@ -116,46 +117,46 @@ always @(posedge clk or negedge rst_n)begin
             ADDR16:begin
                 if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)
                         state <= ADDR8;
-                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÃ»ÓĞ½ÓÊÕµ½ÏìÓ¦
-                    state <= ERROR;//È·ÈÏµØÖ·×´Ì¬½áÊø£¬½øÈëÈ·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬
+                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ²¡æœ‰æ¥æ”¶åˆ°å“åº”
+                    state <= ERROR;//ç¡®è®¤åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€
                 else 
                     state <= ADDR16;
             end
 
             ADDR8:begin
-                if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)begin//ÒÑ¾­¸ø³öĞ´ÈëµÄ¼Ä´æÆ÷£¬²¢ÇÒÕıÈ·½ÓÊÕµ½ÏìÓ¦
+                if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)begin//å·²ç»ç»™å‡ºå†™å…¥çš„å¯„å­˜å™¨ï¼Œå¹¶ä¸”æ­£ç¡®æ¥æ”¶åˆ°å“åº”
                     if(i2c_rh_wl==1'b0)
-                        state <= DATA_WR;//È·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬½áÊø£¬½øÈëĞ´Êı¾İ×´Ì¬
+                        state <= DATA_WR;//ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥å†™æ•°æ®çŠ¶æ€
                     else if(i2c_rh_wl==1'b1)
-                        state <= RD_START;//È·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬½áÊø£¬½øÈë¶Á¿ªÊ¼×´Ì¬
+                        state <= RD_START;//ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥è¯»å¼€å§‹çŠ¶æ€
                 end
-                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÃ»ÓĞ½ÓÊÕµ½ÏìÓ¦
-                    state <= ERROR;//È·ÈÏµØÖ·×´Ì¬½áÊø£¬½øÈëÈ·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬
+                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ²¡æœ‰æ¥æ”¶åˆ°å“åº”
+                    state <= ERROR;//ç¡®è®¤åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€
                 else 
                     state <= ADDR8;
             end
 
             DATA_WR:begin
-                if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)//ÒÑ¾­¸ø³öĞ´ÈëÊı¾İ²¢ÕıÈ·½ÓÊÕµ½ÏìÓ¦
-                    state <= STOP;//Êı¾İĞ´ÈëÍê³É½øÈëÍ£Ö¹×´Ì¬
-                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÃ»ÓĞ½ÓÊÕµ½ÏìÓ¦
-                    state <= ERROR;//È·ÈÏµØÖ·×´Ì¬½áÊø£¬½øÈëÈ·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬
+                if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)//å·²ç»ç»™å‡ºå†™å…¥æ•°æ®å¹¶æ­£ç¡®æ¥æ”¶åˆ°å“åº”
+                    state <= STOP;//æ•°æ®å†™å…¥å®Œæˆè¿›å…¥åœæ­¢çŠ¶æ€
+                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ²¡æœ‰æ¥æ”¶åˆ°å“åº”
+                    state <= ERROR;//ç¡®è®¤åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€
                 else
                     state <= DATA_WR;
             end
 
             RD_START:begin
                 if(cnt_flag=='d3 && drive_flag)
-                    state <= ADDR_RD;//½øÈëÉè±¸µØÖ·¶Á²Ù×÷
+                    state <= ADDR_RD;//è¿›å…¥è®¾å¤‡åœ°å€è¯»æ“ä½œ
                 else
                     state <= RD_START;
             end
 
             ADDR_RD:begin
                 if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)
-                    state <= DATA_RD;//½øÈë¶ÁÊı¾İ×´Ì¬
-                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÃ»ÓĞ½ÓÊÕµ½ÏìÓ¦
-                    state <= ERROR;//È·ÈÏµØÖ·×´Ì¬½áÊø£¬½øÈëÈ·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬
+                    state <= DATA_RD;//è¿›å…¥è¯»æ•°æ®çŠ¶æ€
+                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ²¡æœ‰æ¥æ”¶åˆ°å“åº”
+                    state <= ERROR;//ç¡®è®¤åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€
                 else
                     state <= ADDR_RD;
             end
@@ -163,8 +164,8 @@ always @(posedge clk or negedge rst_n)begin
             DATA_RD:begin
                 if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b1)
                     state <= STOP;
-                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//·¢ËÍÍêÉè±¸µØÖ·£¬²¢ÇÒÃ»ÓĞ½ÓÊÕµ½ÏìÓ¦
-                    state <= ERROR;//È·ÈÏµØÖ·×´Ì¬½áÊø£¬½øÈëÈ·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬
+                else if(cnt_flag=='d35 && drive_flag && i2c_ack==1'b0)//å‘é€å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ²¡æœ‰æ¥æ”¶åˆ°å“åº”
+                    state <= ERROR;//ç¡®è®¤åœ°å€çŠ¶æ€ç»“æŸï¼Œè¿›å…¥ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€
                 else
                     state <= DATA_RD;
             end
@@ -192,13 +193,13 @@ always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         work_flag <= 1'b0;
     end
-    else if(state==START)begin//½ÓÊÕµ½¿ªÊ¼ĞÅºÅ
+    else if(state==START)begin//æ¥æ”¶åˆ°å¼€å§‹ä¿¡å·
         work_flag <= 1'b1;
     end
     else if(state==IDLE)begin
         work_flag <= 1'b0;
     end
-    else if(i2c_done==1'b1)begin//Ò»´Î¶ÁĞ´Íê³É
+    else if(i2c_done==1'b1)begin//ä¸€æ¬¡è¯»å†™å®Œæˆ
         work_flag <= 1'b0;
     end
 end
@@ -219,15 +220,15 @@ always @(posedge clk or negedge rst_n)begin
     end
 end
 
-assign add_cnt = work_flag;//´¦ÓÚ¹¤×÷×´Ì¬Ê±Ò»Ö±¼ÆÊı       
-assign end_cnt = add_cnt && cnt== MAX;//¼ÆÊıµ½×î´óÖµÇåÁã
+assign add_cnt = work_flag;//å¤„äºå·¥ä½œçŠ¶æ€æ—¶ä¸€ç›´è®¡æ•°       
+assign end_cnt = add_cnt && cnt== MAX;//è®¡æ•°åˆ°æœ€å¤§å€¼æ¸…é›¶
 
 //--------------------drive_flag--------------------
 always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         drive_flag <= 1'b0;
     end
-    else if(cnt==FLAG0 || cnt==FLAG1 || cnt==FLAG2 || cnt==FLAG3)begin//²úÉúÒ»¸öÇı¶¯ĞÅºÅ
+    else if(cnt==FLAG0 || cnt==FLAG1 || cnt==FLAG2 || cnt==FLAG3)begin//äº§ç”Ÿä¸€ä¸ªé©±åŠ¨ä¿¡å·
         drive_flag <= 1'b1;
     end
     else begin
@@ -236,7 +237,7 @@ always @(posedge clk or negedge rst_n)begin
 end
 
 //--------------------cnt_freq--------------------
-//¶ÔÇı¶¯ĞÅºÅ½øĞĞ¼ÆÊı£¬ÒÔ´ËÀ´²úÉúI2CÊ±ÖÓ
+//å¯¹é©±åŠ¨ä¿¡å·è¿›è¡Œè®¡æ•°ï¼Œä»¥æ­¤æ¥äº§ç”ŸI2Cæ—¶é’Ÿ
 always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         cnt_freq <= 0;
@@ -288,7 +289,7 @@ always @(posedge clk or negedge rst_n)begin
 end
 
 //--------------------cnt_flag--------------------
-//¼ÆÊıµ±Ç°×´Ì¬ÏÂÓĞ¶àÉÙ¸ödrive_flag
+//è®¡æ•°å½“å‰çŠ¶æ€ä¸‹æœ‰å¤šå°‘ä¸ªdrive_flag
 always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
          cnt_flag <= 0;
@@ -311,7 +312,7 @@ assign add_cnt_flag = drive_flag;
 assign end_cnt_flag = add_cnt_flag && cnt_flag== x ; 
 
 //--------------------x--------------------
-//xÎª²»Í¬×´Ì¬ÏÂ£¬¼ÆÊıÆ÷µÄ¼ÆÊı×î´óÖµ
+//xä¸ºä¸åŒçŠ¶æ€ä¸‹ï¼Œè®¡æ•°å™¨çš„è®¡æ•°æœ€å¤§å€¼
 always  @(*)begin
     case(state)
         IDLE: x=0;
@@ -329,22 +330,22 @@ always @(posedge clk or negedge rst_n)begin
         sda_dir <= 1'b0;
     end
     else if(state==START || state==RD_START || state==STOP)begin
-        sda_dir <= 1'b1;//ÔÚĞ´¿ªÊ¼£¬¶Á¿ªÊ¼£¬ºÍ½áÊø×´Ì¬£¬ÓÉÓÃ»§²Ù×İÊı¾İ×ÜÏß£¬²úÉú¿ªÊ¼»òÕßÍ£Ö¹ĞÅºÅ£¬ËùÒÔĞ´Êı¾İÊ¹ÄÜÓĞĞ§
+        sda_dir <= 1'b1;//åœ¨å†™å¼€å§‹ï¼Œè¯»å¼€å§‹ï¼Œå’Œç»“æŸçŠ¶æ€ï¼Œç”±ç”¨æˆ·æ“çºµæ•°æ®æ€»çº¿ï¼Œäº§ç”Ÿå¼€å§‹æˆ–è€…åœæ­¢ä¿¡å·ï¼Œæ‰€ä»¥å†™æ•°æ®ä½¿èƒ½æœ‰æ•ˆ
     end
     else if(state==SLADDR || state==ADDR16 ||state==ADDR8 ||state==DATA_WR || state==ADDR_RD)begin
-        if(cnt_flag < 'd32)begin//¸ø³öÓÃ»§Êı¾İÊ±£¬Ğ´Êı¾İÊ¹ÄÜÓĞĞ§
+        if(cnt_flag < 'd32)begin//ç»™å‡ºç”¨æˆ·æ•°æ®æ—¶ï¼Œå†™æ•°æ®ä½¿èƒ½æœ‰æ•ˆ
             sda_dir <= 1'b1;
         end
         else begin
-            sda_dir <= 1'b0;//µÈ´ı´ÓÉè±¸ÏìÓ¦Ê±£¬Ğ´Êı¾İÊ¹ÄÜÎŞĞ§
+            sda_dir <= 1'b0;//ç­‰å¾…ä»è®¾å¤‡å“åº”æ—¶ï¼Œå†™æ•°æ®ä½¿èƒ½æ— æ•ˆ
         end
     end
     else if(state==DATA_RD)begin
         if(cnt_flag < 'd32)begin
-            sda_dir <= 1'b0;//½ÓÊÕÊı¾İ×´Ì¬£¬´ËÊ±ÓÉ´Ó»ú·¢ËÍÊı¾İ¸øÖ÷»ú£¬Ğ´Êı¾İÊ¹ÄÜÎŞĞ§
+            sda_dir <= 1'b0;//æ¥æ”¶æ•°æ®çŠ¶æ€ï¼Œæ­¤æ—¶ç”±ä»æœºå‘é€æ•°æ®ç»™ä¸»æœºï¼Œå†™æ•°æ®ä½¿èƒ½æ— æ•ˆ
         end
         else begin
-            sda_dir <= 1'b1;//½ÓÊÕÊı¾İÍê³É£¬Ö÷»úĞèÒª¶Ô´Ó»ú×ö³öÓ¦´ğ£¬Ğ´Êı¾İÊ¹ÄÜÓĞĞ§
+            sda_dir <= 1'b1;//æ¥æ”¶æ•°æ®å®Œæˆï¼Œä¸»æœºéœ€è¦å¯¹ä»æœºåšå‡ºåº”ç­”ï¼Œå†™æ•°æ®ä½¿èƒ½æœ‰æ•ˆ
         end
     end
     else begin
@@ -360,11 +361,11 @@ always @(posedge clk or negedge rst_n)begin
     else begin
         case(state)
             IDLE:begin
-                data_shift <= 'd0;//¿ÕÏĞ×´Ì¬£¬ÈÃÒÆÎ»¼Ä´æÆ÷±£³ÖÎª0
+                data_shift <= 'd0;//ç©ºé—²çŠ¶æ€ï¼Œè®©ç§»ä½å¯„å­˜å™¨ä¿æŒä¸º0
             end
 
             START:begin
-                data_shift <= {sensor_addr[6:0],1'b0};//Ğ´¿ªÊ¼×´Ì¬£¬¸ø³öÉè±¸Ğ´Ö¸Áî
+                data_shift <= {sensor_addr[6:0],1'b0};//å†™å¼€å§‹çŠ¶æ€ï¼Œç»™å‡ºè®¾å¤‡å†™æŒ‡ä»¤
             end
 
             SLADDR:begin
@@ -378,27 +379,27 @@ always @(posedge clk or negedge rst_n)begin
 
             ADDR16:begin
                 if(end_cnt_flag && i2c_ack==1'b1)
-                    data_shift <= i2c_addr[7:0];//È·ÈÏÉè±¸×´Ì¬½áÊøÊ±£¬¸ø³ö¼Ä´æÆ÷µØÖ·
+                    data_shift <= i2c_addr[7:0];//ç¡®è®¤è®¾å¤‡çŠ¶æ€ç»“æŸæ—¶ï¼Œç»™å‡ºå¯„å­˜å™¨åœ°å€
                 else if(cnt_flag<'d32 && cnt_flag[1:0]==2'd3 && drive_flag)
                     data_shift <= {data_shift[6:0],1'b0};
             end
 
             ADDR8:begin
-                if(end_cnt_flag && i2c_ack==1'b1 && i2c_rh_wl==1'b0)//¼´½«½øÈëĞ´Êı¾İ×´Ì¬
-                    data_shift <= i2c_data_w;//È·ÈÏ¼Ä´æÆ÷µØÖ·×´Ì¬½áÊøºó¸ø³öÒªĞ´ÈëµÄÊı¾İ
+                if(end_cnt_flag && i2c_ack==1'b1 && i2c_rh_wl==1'b0)//å³å°†è¿›å…¥å†™æ•°æ®çŠ¶æ€
+                    data_shift <= i2c_data_w;//ç¡®è®¤å¯„å­˜å™¨åœ°å€çŠ¶æ€ç»“æŸåç»™å‡ºè¦å†™å…¥çš„æ•°æ®
                 else if(cnt_flag<'d32 && cnt_flag[1:0]==2'd3 && drive_flag)
                     data_shift <= {data_shift[6:0],1'b0};
             end
 
             DATA_WR:begin
                 if(cnt_flag<'d32 && cnt_flag[1:0]==2'd3 && drive_flag)
-                    data_shift <= {data_shift[6:0],1'b0};//½«Êı¾İĞ´Èëµ½¼Ä´æÆ÷ÖĞ
+                    data_shift <= {data_shift[6:0],1'b0};//å°†æ•°æ®å†™å…¥åˆ°å¯„å­˜å™¨ä¸­
                 else
                    data_shift <= data_shift; 
             end
 
             RD_START:begin
-                data_shift <=  {sensor_addr[6:0],1'b1};//¶Á¿ªÊ¼Ê±£¬½«¶ÁÃüÁîÌî³äÈëÒÆÎ»¼Ä´æÆ÷
+                data_shift <=  {sensor_addr[6:0],1'b1};//è¯»å¼€å§‹æ—¶ï¼Œå°†è¯»å‘½ä»¤å¡«å……å…¥ç§»ä½å¯„å­˜å™¨
             end
 
 
@@ -411,7 +412,7 @@ always @(posedge clk or negedge rst_n)begin
 
             DATA_RD:begin
                 if(cnt_flag<'d32 && cnt_flag[1:0]==2'd1 && drive_flag)
-                    data_shift <= {data_shift[6:0],sda_in};//½«´Ó¼Ä´æÆ÷ÖĞ¶Á³öµÄÊı¾İÌî³äÈëÒÆÎ»¼Ä´æÆ÷
+                    data_shift <= {data_shift[6:0],sda_in};//å°†ä»å¯„å­˜å™¨ä¸­è¯»å‡ºçš„æ•°æ®å¡«å……å…¥ç§»ä½å¯„å­˜å™¨
                 else
                     data_shift <= data_shift;
             end
@@ -434,25 +435,25 @@ always @(posedge clk or negedge rst_n)begin
         case(state)
             START:begin
                 if(cnt_flag=='d4 && drive_flag)
-                    sda_out <= 1'b0;//²úÉúÆğÊ¼Î»
+                    sda_out <= 1'b0;//äº§ç”Ÿèµ·å§‹ä½
                 else
                     sda_out <= sda_out;
             end
  
             SLADDR,ADDR16,ADDR8,DATA_WR,ADDR_RD:begin
-                sda_out <= data_shift[7];//½«Êı¾İ·¢ËÍÖÁÊı¾İ×ÜÏßÉÏ
+                sda_out <= data_shift[7];//å°†æ•°æ®å‘é€è‡³æ•°æ®æ€»çº¿ä¸Š
             end
 
             RD_START:begin
                 if(cnt_flag=='d0)
-                    sda_out <= 1'b1;//²úÉú¶ÁÆğÊ¼Î»
+                    sda_out <= 1'b1;//äº§ç”Ÿè¯»èµ·å§‹ä½
                 else if(cnt_flag=='d1 && drive_flag)
                     sda_out <= 1'b0;
             end
 
             DATA_RD:begin
                 if(cnt_flag>='d32)
-                    sda_out <= 1'b1;//²úÉúNACK
+                    sda_out <= 1'b1;//äº§ç”ŸNACK
                 else
                     sda_out <= sda_out;
             end
@@ -474,7 +475,7 @@ always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         i2c_done <= 1'b0;
     end
-    else if(state==STOP && end_cnt_flag)begin//¼´½«½áÊø±¾´Î¶ÁĞ´²Ù×÷µÄÊ±ºò£¬²úÉúÍê³ÉĞÅºÅ
+    else if(state==STOP && end_cnt_flag)begin//å³å°†ç»“æŸæœ¬æ¬¡è¯»å†™æ“ä½œçš„æ—¶å€™ï¼Œäº§ç”Ÿå®Œæˆä¿¡å·
             i2c_done <= 1'b1;
     end
     else begin
@@ -483,7 +484,7 @@ always @(posedge clk or negedge rst_n)begin
 end
 
 //--------------------i2c_ack--------------------
-//ÊÇ·ñ½ÓÊÕµ½ACK»òÕß²úÉúNACK
+//æ˜¯å¦æ¥æ”¶åˆ°ACKæˆ–è€…äº§ç”ŸNACK
 always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         i2c_ack <= 1'b0;
@@ -492,42 +493,42 @@ always @(posedge clk or negedge rst_n)begin
         case(state)
             SLADDR:begin
                 if(cnt_flag>='d32 && cnt_flag[1:0]=='d1 && drive_flag && sda==1'b0)
-                    i2c_ack <= 1'b1;//Ğ´ÍêÉè±¸µØÖ·£¬²¢ÇÒ½ÓÊÕµ½ÏìÓ¦
+                    i2c_ack <= 1'b1;//å†™å®Œè®¾å¤‡åœ°å€ï¼Œå¹¶ä¸”æ¥æ”¶åˆ°å“åº”
                 else if(end_cnt_flag)
                     i2c_ack <= 1'b0;
             end
 
             ADDR16:begin
                 if(cnt_flag>='d32 && cnt_flag[1:0]=='d1 && drive_flag && sda==1'b0)
-                    i2c_ack <= 1'b1;//Ğ´Íê¼Ä´æÆ÷µØÖ·£¬½ÓÊÕµ½ÏìÓ¦
+                    i2c_ack <= 1'b1;//å†™å®Œå¯„å­˜å™¨åœ°å€ï¼Œæ¥æ”¶åˆ°å“åº”
                 else if(end_cnt_flag)
                     i2c_ack <= 1'b0;
             end
 
             ADDR8:begin
                 if(cnt_flag>='d32 && cnt_flag[1:0]=='d1 && drive_flag && sda==1'b0)
-                    i2c_ack <= 1'b1;//Ğ´Íê¼Ä´æÆ÷µØÖ·£¬½ÓÊÕµ½ÏìÓ¦
+                    i2c_ack <= 1'b1;//å†™å®Œå¯„å­˜å™¨åœ°å€ï¼Œæ¥æ”¶åˆ°å“åº”
                 else if(end_cnt_flag)
                     i2c_ack <= 1'b0;
             end
 
             DATA_WR:begin
                 if(cnt_flag>='d32 && cnt_flag[1:0]=='d1 && drive_flag && sda==1'b0)
-                    i2c_ack <= 1'b1;//Ğ´ÍêÊı¾İ£¬²¢ÇÒ½ÓÊÕµ½ÏìÓ¦
+                    i2c_ack <= 1'b1;//å†™å®Œæ•°æ®ï¼Œå¹¶ä¸”æ¥æ”¶åˆ°å“åº”
                 else if(end_cnt_flag)
                     i2c_ack <= 1'b0;
             end
 
             ADDR_RD:begin
                 if(cnt_flag>='d32 && cnt_flag[1:0]=='d1 && drive_flag && sda==1'b0)
-                    i2c_ack <= 1'b1;//¶ÁÖ¸Áî·¢ËÍÍê±Ï£¬½ÓÊÕµ½ÏìÓ¦
+                    i2c_ack <= 1'b1;//è¯»æŒ‡ä»¤å‘é€å®Œæ¯•ï¼Œæ¥æ”¶åˆ°å“åº”
                 else if(end_cnt_flag)
                     i2c_ack <= 1'b0;
             end
 
             DATA_RD:begin
                 if(cnt_flag>='d32 && cnt_flag[1:0]=='d1 && drive_flag && sda==1'b1)
-                    i2c_ack <= 1'b1;//Êı¾İÈ«²¿¶ÁÍê£¬Ö÷»ú¸ø³öNACK
+                    i2c_ack <= 1'b1;//æ•°æ®å…¨éƒ¨è¯»å®Œï¼Œä¸»æœºç»™å‡ºNACK
                 else if(end_cnt_flag)
                     i2c_ack <= 1'b0;
             end
@@ -542,7 +543,7 @@ always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         i2c_data_r <= 1'b0;
     end
-    else if(i2c_done)begin//¼´½«½áÊø±¾´Î¶ÁĞ´²Ù×÷µÄÊ±ºò£¬²úÉúÍê³ÉĞÅºÅ
+    else if(i2c_done)begin//å³å°†ç»“æŸæœ¬æ¬¡è¯»å†™æ“ä½œçš„æ—¶å€™ï¼Œäº§ç”Ÿå®Œæˆä¿¡å·
         i2c_data_r <= data_shift;
     end
     else begin
@@ -554,7 +555,7 @@ always @(posedge clk or negedge rst_n)begin
     if(!rst_n)begin
         err_flag <= 1'b0;
     end
-    else if(state==ERROR)begin//¼´½«½áÊø±¾´Î¶ÁĞ´²Ù×÷µÄÊ±ºò£¬²úÉúÍê³ÉĞÅºÅ
+    else if(state==ERROR)begin//å³å°†ç»“æŸæœ¬æ¬¡è¯»å†™æ“ä½œçš„æ—¶å€™ï¼Œäº§ç”Ÿå®Œæˆä¿¡å·
         err_flag <= 1'b1;
     end
     else begin
